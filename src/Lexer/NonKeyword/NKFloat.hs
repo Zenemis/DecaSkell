@@ -1,4 +1,4 @@
-module Lexer.NonKeyword.NKNumber.NKFloat where
+module Lexer.NonKeyword.NKFloat where
 
 import Data.List (isInfixOf)
 import Data.Char (isDigit)

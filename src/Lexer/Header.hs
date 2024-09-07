@@ -6,6 +6,7 @@ module Lexer.Header (
 
 import Data.List (isPrefixOf)
 
+separators :: [Char]
 separators = [' ', '\n', '\t', ';', ',', '(', ')', '{', '}', '[', ']', 
               '=', '<', '>', '!', '+', '-', '*', '/', '%', '&', '|']
 
@@ -17,9 +18,13 @@ separators = [' ', '\n', '\t', ';', ',', '(', ')', '{', '}', '[', ']',
 -- Vérification forte de préfixe
 -- Vérifie aussi qu'il s'agit bien d'un mot-clef réservé (le caractère suivant est un séparateur)
 (<|) :: String -> String -> Bool
-(<|) prefix str = (prefix `isPrefixOf` str) && 
-                  (let (c:s) = drop (length prefix) str
-                  in c `elem` separators)
+(<|) _ [] = False
+(<|) prefix str =
+    let rest = drop (length prefix) str
+    in (prefix `isPrefixOf` str) &&
+       (case rest of
+          (c:_) -> c `elem` separators
+          []    -> False)
 
 -- Définition des différents types de tokens
 data Token

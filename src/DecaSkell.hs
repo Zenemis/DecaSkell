@@ -3,7 +3,7 @@ module Main where
 import System.Environment (getArgs)
 import System.IO (readFile)
 
-import Lexer.Lexer
+import Lexer
 
 main :: IO ()
 main = do

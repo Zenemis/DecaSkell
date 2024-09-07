@@ -1,4 +1,4 @@
-module Lexer.Lexer (
+module Lexer (
     scan
 ) where
 
@@ -66,12 +66,5 @@ scan file
   | "/*"        << file = OPENCOM : scan (drop 2 file)
   | "*/"        << file = CLOSECOM : scan (drop 2 file)
   | otherwise   = 
-    let word = buildNonKeyword file
-        count = length word
-    in case () of
-      _ | isBoolLitt word   -> BOOLLITT : scan (drop count file)
-        | isIntLitt word    -> INTLITT : scan (drop count file)
-        | isDoubleLitt word -> DOUBLELITT : scan (drop count file)
-        | isStringLitt word -> STRLITT : scan (drop count file)
-        | isID word         -> ID : scan (drop count file)
-        | otherwise         -> error $ "Erreur lexicale: token non reconnu ou identifiant invalide '" ++ word ++ "'"
+    let (token, count) = buildNonKeyword file
+    in token : scan (drop count file)

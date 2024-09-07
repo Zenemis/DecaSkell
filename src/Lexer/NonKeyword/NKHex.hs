@@ -1,4 +1,4 @@
-module Lexer.NonKeyword.NKNumber.NKHex where
+module Lexer.NonKeyword.NKHex where
 
 import Lexer.Header (Token(..))
 
