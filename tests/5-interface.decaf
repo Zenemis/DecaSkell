@@ -1,0 +1,14 @@
+interface Drawable {
+    void draw();
+}
+
+class Circle implements Drawable {
+    void draw() {
+        Print("Drawing a circle");
+    }
+}
+
+void main() {
+    Drawable shape = New(Circle);
+    shape.draw(); // Affiche "Drawing a circle"
+}

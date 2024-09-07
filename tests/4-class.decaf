@@ -1,0 +1,23 @@
+class Person {
+    string name;
+    int age;
+
+    void setName(string newName) {
+        this.name = newName;
+    }
+
+    void setAge(int newAge) {
+        this.age = newAge;
+    }
+
+    void printInfo() {
+        Print("Name: ", this.name, ", Age: ", this.age);
+    }
+}
+
+void main() {
+    Person person = New(Person);
+    person.setName("Alice");
+    person.setAge(30);
+    person.printInfo();
+}

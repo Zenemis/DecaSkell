@@ -1,0 +1,19 @@
+class Animal {
+    void makeSound() {
+        Print("Some generic animal sound");
+    }
+}
+
+class Dog extends Animal {
+    void makeSound() {
+        Print("Bark");
+    }
+}
+
+void main() {
+    Animal myAnimal = New(Animal);
+    Animal myDog = New(Dog);
+
+    myAnimal.makeSound(); // Affiche "Some generic animal sound"
+    myDog.makeSound();    // Affiche "Bark"
+}
