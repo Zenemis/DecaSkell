@@ -14,8 +14,8 @@ import Lexer.NonKeyword.NKString
 
 buildNonKeyword :: String -> (Token, Int)
 buildNonKeyword [] = error "buildNonKeyword : Empty string cannot be a token"
-buildNonKeyword s@(x:xs)
+buildNonKeyword s@(x:_)
   | isAlpha x = buildAlpha s
   | isDigit x = buildNumber s
   | x == '"'  = buildString s
-  | otherwise = error ("buildNonKeyword : unknown word not recognized neither as a litteral nor an id " ++ take 31 xs)
+  | otherwise = error ("buildNonKeyword : unknown word not recognized neither as a litteral nor an id " ++ take 31 s)

@@ -5,6 +5,8 @@ module Lexer (
 import Lexer.Header
 import Lexer.NonKeyword
 
+import Data.List (isPrefixOf)
+
 type File = String
 
 -- Fonction scan
@@ -30,11 +32,14 @@ scan file
   | "else"      <| file = ELSE : scan (drop 4 file)
   | "return"    <| file = RETURN : scan (drop 6 file)
   | "break"     <| file = BREAK : scan (drop 5 file)
-  | "new"       <| file = NEW : scan (drop 3 file)
-  | "newArray"  <| file = NEWARRAY : scan (drop 8 file)
-  | "print"     <| file = PRINT : scan (drop 5 file)
-  | "readInteger" <| file = READINTEGER : scan (drop 11 file)
-  | "readLine"  <| file = READLINE : scan (drop 8 file)
+  | "New"       <| file = NEW : scan (drop 3 file)
+  | "NewArray"  <| file = NEWARRAY : scan (drop 8 file)
+  | "Print"     <| file = PRINT : scan (drop 5 file)
+  | "ReadInteger" <| file = READINTEGER : scan (drop 11 file)
+  | "ReadLine"  <| file = READLINE : scan (drop 8 file)
+  | "//"        << file = SINGCOMM : scan (drop (ignoreComment file) file)
+  | "/*"        << file = OPENCOM : scan (drop (ignoreComment file) file)
+  | "*/"        << file = CLOSECOM : scan (drop 2 file)
   | "+"         << file = PLUS : scan (drop 1 file)
   | "-"         << file = MINUS : scan (drop 1 file)
   | "*"         << file = TIMES : scan (drop 1 file)
@@ -62,9 +67,17 @@ scan file
   | "{"         << file = OPENBRACE : scan (drop 1 file)
   | "}"         << file = CLOSEBRACE : scan (drop 1 file)
   | "\\"        << file = BSLASH : scan (drop 1 file)
-  | "//"        << file = SINGCOMM : scan (drop 2 file)
-  | "/*"        << file = OPENCOM : scan (drop 2 file)
-  | "*/"        << file = CLOSECOM : scan (drop 2 file)
   | otherwise   = 
     let (token, count) = buildNonKeyword file
     in token : scan (drop count file)
+
+ignoreComment :: String -> Int
+ignoreComment ('/':'*':xs) = 2 + ignoreCommentWhileOpened xs
+ignoreComment ('/':'/':xs) = length (takeWhile (/= '\n') xs)
+ignoreComment _ = 0
+
+ignoreCommentWhileOpened :: String -> Int
+ignoreCommentWhileOpened [] = error "Comment opened but not closed"
+ignoreCommentWhileOpened s@(_:xs)
+  | "*/" `isPrefixOf` s = 0
+  | otherwise           = 1 + (ignoreCommentWhileOpened xs)
