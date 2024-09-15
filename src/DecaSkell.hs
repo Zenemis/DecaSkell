@@ -2,6 +2,8 @@ module Main where
 
 import System.Environment (getArgs)
 
+import File (create)
+
 import Lexer
 
 main :: IO ()
@@ -13,7 +15,7 @@ main = do
             -- Read the content of the file
             content <- readFile filePath
             -- Run the scanner on the content
-            let tokens = scan content
+            let tokens = scan (create content)
             -- Print the resulting tokens
             print tokens
             -- print content

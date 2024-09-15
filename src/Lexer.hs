@@ -5,81 +5,87 @@ module Lexer (
 import Lexer.Header
 import Lexer.NonKeyword
 
+import Error (LexicalError(..), handleLexicalErrors)
+
 import File
 
 import Data.List (isPrefixOf)
 
 -- Fonction scan
 scan :: File -> [Token]
-scan ""                 = []
-scan ((' '):rest)       = scan rest
-scan file
-  | "void"      <| file = VOID : scan (drop 4 file)
-  | "int"       <| file = INT : scan (drop 3 file)
-  | "double"    <| file = DOUBLE : scan (drop 6 file)
-  | "bool"      <| file = BOOL : scan (drop 4 file)
-  | "string"    <| file = STRING : scan (drop 6 file)
-  | "null"      <| file = NULL : scan (drop 4 file)
-  | "class"     <| file = CLASS : scan (drop 5 file)
-  | "interface" <| file = INTERFACE : scan (drop 9 file)
-  | "this"      <| file = THIS : scan (drop 4 file)
-  | "extends"   <| file = EXTENDS : scan (drop 7 file)
-  | "implements" <| file = IMPLEMENTS : scan (drop 10 file)
-  | "for"       <| file = FOR : scan (drop 3 file)
-  | "while"     <| file = WHILE : scan (drop 5 file)
-  | "if"        <| file = IF : scan (drop 2 file)
-  | "elif"      <| file = ELIF : scan (drop 7 file)
-  | "else"      <| file = ELSE : scan (drop 4 file)
-  | "return"    <| file = RETURN : scan (drop 6 file)
-  | "break"     <| file = BREAK : scan (drop 5 file)
-  | "New"       <| file = NEW : scan (drop 3 file)
-  | "NewArray"  <| file = NEWARRAY : scan (drop 8 file)
-  | "Print"     <| file = PRINT : scan (drop 5 file)
-  | "ReadInteger" <| file = READINTEGER : scan (drop 11 file)
-  | "ReadLine"  <| file = READLINE : scan (drop 8 file)
-  | "//"        << file = SINGCOMM : scan (drop (ignoreComment file) file)
-  | "/*"        << file = OPENCOM : scan (drop (ignoreComment file) file)
-  | "*/"        << file = CLOSECOM : scan (drop 2 file)
-  | "+"         << file = PLUS : scan (drop 1 file)
-  | "-"         << file = MINUS : scan (drop 1 file)
-  | "*"         << file = TIMES : scan (drop 1 file)
-  | "/"         << file = DIV : scan (drop 1 file)
-  | "%"         << file = MODULO : scan (drop 1 file)
-  | "<="        << file = LEQU : scan (drop 2 file)
-  | "<"         << file = LTHAN : scan (drop 1 file)
-  | ">="        << file = GEQU : scan (drop 2 file)
-  | ">"         << file = GTHAN : scan (drop 1 file)
-  | "=="        << file = EQUAL : scan (drop 2 file)
-  | "!="        << file = NEQUAL : scan (drop 2 file)
-  | "&&"        << file = AND : scan (drop 2 file)
-  | "||"        << file = OR : scan (drop 2 file)
-  | "!"         << file = NOT : scan (drop 1 file)
-  | ";"         << file = SEMICOLON : scan (drop 1 file)
-  | "\n"        << file = EOL : scan (drop 1 file)
-  | ","         << file = COMMA : scan (drop 1 file)
-  | "."         << file = DOT : scan (drop 1 file)
-  | "="         << file = ASSIGN : scan (drop 1 file)
-  | "[]"        << file = BRACKS : scan (drop 2 file)
-  | "["         << file = OPENBRAKT : scan (drop 1 file)
-  | "]"         << file = CLOSEBRAKT : scan (drop 1 file)
-  | "("         << file = OPENPAR : scan (drop 1 file)
-  | ")"         << file = CLOSEPAR : scan (drop 1 file)
-  | "{"         << file = OPENBRACE : scan (drop 1 file)
-  | "}"         << file = CLOSEBRACE : scan (drop 1 file)
-  | "\\"        << file = BSLASH : scan (drop 1 file)
-  | otherwise = case buildNonKeyword file of
-      Left err -> error ("Lexical error || " ++ show err)
-      Right (token, count) -> token : scan (drop count file)
+scan (FileCons "" _)           = []
+scan (FileCons ((' '):rest) l) = scan (FileCons rest l)
+scan file@(FileCons code line)
+  | "void"      <| code = VOID : scan (advance 4 file)
+  | "int"       <| code = INT : scan (advance 3 file)
+  | "double"    <| code = DOUBLE : scan (advance 6 file)
+  | "bool"      <| code = BOOL : scan (advance 4 file)
+  | "string"    <| code = STRING : scan (advance 6 file)
+  | "null"      <| code = NULL : scan (advance 4 file)
+  | "class"     <| code = CLASS : scan (advance 5 file)
+  | "interface" <| code = INTERFACE : scan (advance 9 file)
+  | "this"      <| code = THIS : scan (advance 4 file)
+  | "extends"   <| code = EXTENDS : scan (advance 7 file)
+  | "implements" <| code = IMPLEMENTS : scan (advance 10 file)
+  | "for"       <| code = FOR : scan (advance 3 file)
+  | "while"     <| code = WHILE : scan (advance 5 file)
+  | "if"        <| code = IF : scan (advance 2 file)
+  | "elif"      <| code = ELIF : scan (advance 7 file)
+  | "else"      <| code = ELSE : scan (advance 4 file)
+  | "return"    <| code = RETURN : scan (advance 6 file)
+  | "break"     <| code = BREAK : scan (advance 5 file)
+  | "New"       <| code = NEW : scan (advance 3 file)
+  | "NewArray"  <| code = NEWARRAY : scan (advance 8 file)
+  | "Print"     <| code = PRINT : scan (advance 5 file)
+  | "ReadInteger" <| code = READINTEGER : scan (advance 11 file)
+  | "ReadLine"  <| code = READLINE : scan (advance 8 file)
+  | "//" << code = case ignoreComment code of
+                     Left err -> handleLexicalErrors err line
+                     Right n  -> SINGCOMM : scan (advance n file)
+  | "/*" << code = case ignoreComment code of
+                     Left err -> handleLexicalErrors err line
+                     Right n  -> OPENCOM : scan (advance n file)
+  | "*/"        << code = CLOSECOM : scan (advance 2 file)
+  | "+"         << code = PLUS : scan (advance 1 file)
+  | "-"         << code = MINUS : scan (advance 1 file)
+  | "*"         << code = TIMES : scan (advance 1 file)
+  | "/"         << code = DIV : scan (advance 1 file)
+  | "%"         << code = MODULO : scan (advance 1 file)
+  | "<="        << code = LEQU : scan (advance 2 file)
+  | "<"         << code = LTHAN : scan (advance 1 file)
+  | ">="        << code = GEQU : scan (advance 2 file)
+  | ">"         << code = GTHAN : scan (advance 1 file)
+  | "=="        << code = EQUAL : scan (advance 2 file)
+  | "!="        << code = NEQUAL : scan (advance 2 file)
+  | "&&"        << code = AND : scan (advance 2 file)
+  | "||"        << code = OR : scan (advance 2 file)
+  | "!"         << code = NOT : scan (advance 1 file)
+  | ";"         << code = SEMICOLON : scan (advance 1 file)
+  | "\n"        << code = EOL : scan (advance 1 file)
+  | ","         << code = COMMA : scan (advance 1 file)
+  | "."         << code = DOT : scan (advance 1 file)
+  | "="         << code = ASSIGN : scan (advance 1 file)
+  | "[]"        << code = BRACKS : scan (advance 2 file)
+  | "["         << code = OPENBRAKT : scan (advance 1 file)
+  | "]"         << code = CLOSEBRAKT : scan (advance 1 file)
+  | "("         << code = OPENPAR : scan (advance 1 file)
+  | ")"         << code = CLOSEPAR : scan (advance 1 file)
+  | "{"         << code = OPENBRACE : scan (advance 1 file)
+  | "}"         << code = CLOSEBRACE : scan (advance 1 file)
+  | "\\"        << code = BSLASH : scan (advance 1 file)
+  | otherwise = case buildNonKeyword code of
+      Left err -> handleLexicalErrors err line
+      Right (token, count) -> token : scan (advance count file)
 
 
 
-ignoreComment :: String -> Int
-ignoreComment ('/':'*':xs) = 2 + ignoreCommentWhileOpened xs
-ignoreComment ('/':'/':xs) = length (takeWhile (/= '\n') xs)
-ignoreComment _ = 0
+ignoreComment :: String -> Either LexicalError Int
+ignoreComment ('/':'*':xs) = fmap (2 +) (ignoreCommentWhileOpened xs)
+ignoreComment ('/':'/':xs) = Right (length (takeWhile (/= '\n') xs))
+ignoreComment _ = Right 0
 
-ignoreCommentWhileOpened :: String -> Int
-ignoreCommentWhileOpened [] = error "Comment opened but not closed"
-ignoreCommentWhileOpened s@(_:xs)
-  | "*/" `isPrefixOf` s = 0
-  | otherwise           = 1 + (ignoreCommentWhileOpened xs)
+ignoreCommentWhileOpened :: String -> Either LexicalError Int
+ignoreCommentWhileOpened [] = Left (CommentError "Comment opened but not closed")
+ignoreCommentWhileOpened s@(x:xs)
+  | "*/" `isPrefixOf` s = Right 2
+  | otherwise           = fmap (1 +) (ignoreCommentWhileOpened xs)
