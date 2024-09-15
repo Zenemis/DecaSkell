@@ -5,23 +5,30 @@ import Lexer.NonKeyword.NKFloat
 
 import Lexer.Header (Token(..))
 
+import Error (LexicalError(..))
+
 import Data.Char (isDigit, toLower)
 
 -- Fonction pour vérifier qu'un caractère construit bien un nombre
 isNumDigit :: Char -> Bool
 isNumDigit c = isDigit c || toLower c == 'e' || c == '.'
 
--- Fonction pour construire un token numérique à partir du préfix (intlitt / doublelitt)
-buildNumber :: String -> (Token, Int)
-buildNumber [_] = (INTLITT, 1)
-buildNumber ('0':'x':xs) = let (token, size) = buildHex xs in (token, size+2)
-buildNumber ('0':'X':xs) = let (token, size) = buildHex xs in (token, size+2)
+-- Fonction pour construire un token numérique à partir du préfixe (intlitt / doublelitt)
+buildNumber :: String -> Either LexicalError (Token, Int)
+buildNumber [_] = Right (INTLITT, 1)
+buildNumber ('0':'x':xs) = handleHexResult (buildHex xs) 2
+buildNumber ('0':'X':xs) = handleHexResult (buildHex xs) 2
 buildNumber s            = buildNumberCut s
 
+-- Fonction pour traiter le résultat de buildHex et ajuster la taille
+handleHexResult :: Either LexicalError (Token, Int) -> Int -> Either LexicalError (Token, Int)
+handleHexResult (Right (token, size)) offset = Right (token, size + offset)
+handleHexResult (Left err) _ = Left err
+
 -- Fonction pour construire un token numérique à partir de la suite (intlitt / doublelitt)
-buildNumberCut :: String -> (Token, Int)
+buildNumberCut :: String -> Either LexicalError (Token, Int)
 buildNumberCut s
-  | all isDigit lexem  = (INTLITT, length lexem)
-  | isDoubleLitt lexem = (DOUBLELITT, length lexem)
-  | otherwise       = error "Invalid number litteral"
+  | all isDigit lexem  = Right (INTLITT, length lexem)
+  | isDoubleLitt lexem = Right (DOUBLELITT, length lexem)
+  | otherwise       = Left (LitteralError "Invalid number litteral")
   where (lexem, _) = span isNumDigit s

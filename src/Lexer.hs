@@ -5,9 +5,9 @@ module Lexer (
 import Lexer.Header
 import Lexer.NonKeyword
 
-import Data.List (isPrefixOf)
+import File
 
-type File = String
+import Data.List (isPrefixOf)
 
 -- Fonction scan
 scan :: File -> [Token]
@@ -67,9 +67,11 @@ scan file
   | "{"         << file = OPENBRACE : scan (drop 1 file)
   | "}"         << file = CLOSEBRACE : scan (drop 1 file)
   | "\\"        << file = BSLASH : scan (drop 1 file)
-  | otherwise   = 
-    let (token, count) = buildNonKeyword file
-    in token : scan (drop count file)
+  | otherwise = case buildNonKeyword file of
+      Left err -> error ("Lexical error || " ++ show err)
+      Right (token, count) -> token : scan (drop count file)
+
+
 
 ignoreComment :: String -> Int
 ignoreComment ('/':'*':xs) = 2 + ignoreCommentWhileOpened xs
