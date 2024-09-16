@@ -5,7 +5,7 @@ module Lexer (
 import Lexer.Header
 import Lexer.NonKeyword
 
-import Error (LexicalError(..), handleLexicalErrors)
+import Error (LexicalError(..), handleErrors)
 
 import File
 
@@ -40,10 +40,10 @@ scan file@(FileCons code line)
   | "ReadInteger" <| code = READINTEGER : scan (advance 11 file)
   | "ReadLine"  <| code = READLINE : scan (advance 8 file)
   | "//" << code = case ignoreComment code of
-                     Left err -> handleLexicalErrors err line
+                     Left err -> handleErrors err line
                      Right n  -> SINGCOMM : scan (advance n file)
   | "/*" << code = case ignoreComment code of
-                     Left err -> handleLexicalErrors err line
+                     Left err -> handleErrors err line
                      Right n  -> OPENCOM : scan (advance n file)
   | "*/"        << code = CLOSECOM : scan (advance 2 file)
   | "+"         << code = PLUS : scan (advance 1 file)
@@ -74,7 +74,7 @@ scan file@(FileCons code line)
   | "}"         << code = CLOSEBRACE : scan (advance 1 file)
   | "\\"        << code = BSLASH : scan (advance 1 file)
   | otherwise = case buildNonKeyword code of
-      Left err -> handleLexicalErrors err line
+      Left err -> handleErrors err line
       Right (token, count) -> token : scan (advance count file)
 
 
@@ -86,6 +86,6 @@ ignoreComment _ = Right 0
 
 ignoreCommentWhileOpened :: String -> Either LexicalError Int
 ignoreCommentWhileOpened [] = Left (CommentError "Comment opened but not closed")
-ignoreCommentWhileOpened s@(x:xs)
+ignoreCommentWhileOpened s@(_:xs)
   | "*/" `isPrefixOf` s = Right 2
   | otherwise           = fmap (1 +) (ignoreCommentWhileOpened xs)
