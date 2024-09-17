@@ -10,5 +10,8 @@ class Circle implements Drawable {
 
 void main() {
     Drawable shape = New(Circle);
+    if (shape == null){
+        return;
+    }
     shape.draw(); // Affiche "Drawing a circle"
 }
