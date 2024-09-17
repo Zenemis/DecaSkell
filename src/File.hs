@@ -19,4 +19,4 @@ advance n file@(FileCons (x:xs) line)
    | otherwise = file
 
 create :: String -> File
-create s = FileCons s 0
+create s = FileCons s 1
