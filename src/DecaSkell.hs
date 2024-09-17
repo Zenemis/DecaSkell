@@ -5,6 +5,7 @@ import System.Environment (getArgs)
 import File (create)
 
 import Lexer
+-- import Parser
 
 main :: IO ()
 main = do

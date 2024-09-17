@@ -33,7 +33,6 @@ data Token
   | DOUBLE
   | BOOL
   | STRING
-  | NULL
   | CLASS     -- OOP
   | INTERFACE
   | THIS
@@ -77,14 +76,15 @@ data Token
   | CLOSEPAR
   | OPENBRACE
   | CLOSEBRACE
-  | BSLASH    -- ID / Literals / Misc
+  | BSLASH    -- ID / Literals 
   | ID
   | TRUE
   | FALSE
   | INTLITT
   | DOUBLELITT
   | STRLITT
-  | OPENCOM
+  | NULL
+  | OPENCOM   -- Misc
   | CLOSECOM
   | SINGCOMM
   deriving (Show, Eq, Enum)
