@@ -1,5 +1,6 @@
 module Lexer (
-    scan
+    scan,
+    Token
 ) where
 
 import Lexer.Header
@@ -21,7 +22,6 @@ scan file@(FileCons code line)
   | "double"    <| code = DOUBLE : scan (advance 6 file)
   | "bool"      <| code = BOOL : scan (advance 4 file)
   | "string"    <| code = STRING : scan (advance 6 file)
-  | "null"      <| code = NULL : scan (advance 4 file)
   | "class"     <| code = CLASS : scan (advance 5 file)
   | "interface" <| code = INTERFACE : scan (advance 9 file)
   | "this"      <| code = THIS : scan (advance 4 file)
@@ -73,6 +73,9 @@ scan file@(FileCons code line)
   | "{"         << code = OPENBRACE : scan (advance 1 file)
   | "}"         << code = CLOSEBRACE : scan (advance 1 file)
   | "\\"        << code = BSLASH : scan (advance 1 file)
+  | "null"      <| code = NULL : scan (advance 4 file)
+  | "true"      <| code = TRUE : scan (advance 4 file)
+  | "false"     <| code = FALSE : scan (advance 5 file)
   | otherwise = case buildNonKeyword code of
       Left err -> handleErrors err line
       Right (token, count) -> token : scan (advance count file)
@@ -81,7 +84,7 @@ scan file@(FileCons code line)
 
 ignoreComment :: String -> Either LexicalError Int
 ignoreComment ('/':'*':xs) = fmap (2 +) (ignoreCommentWhileOpened xs)
-ignoreComment ('/':'/':xs) = Right (length (takeWhile (/= '\n') xs))
+ignoreComment ('/':'/':xs) = Right (length (takeWhile (/= '\n') xs) + 2)
 ignoreComment _ = Right 0
 
 ignoreCommentWhileOpened :: String -> Either LexicalError Int

@@ -16,12 +16,10 @@ isID str = case str of
   [] -> False
   (x:xs) -> isAlpha x && all isValidChar xs && length str <= 31
 
--- Fonction qui construit un token alphanumérique (id / boolitt)
+-- Fonction qui construit un token alphanumérique (id)
 buildAlpha :: String -> Either LexicalError (Token, Int)
 buildAlpha []           = Left (TokenError ("Empty lexem"))
 buildAlpha s
-  | lexem == "true"     = Right (TRUE, 4)
-  | lexem == "false"    = Right (FALSE, 5)
   | isID lexem          = Right (ID, length lexem)
   | otherwise           = Left (IdentifierError ("Malformed identifier : '" ++ lexem ++ "'"))
   where (lexem, _) = span isValidChar s
